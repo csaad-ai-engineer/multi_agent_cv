@@ -1,0 +1,13 @@
+.venv
+.venv312
+__pycache__
+*.pyc
+.pytest_cache
+tests/
+*.egg-info
+node_modules
+frontend/dist
+frontend/node_modules
+.git
+.env
+*.log

@@ -1,0 +1,43 @@
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: chaima-backend
+    env_file: .env
+    environment:
+      # On Mac/Windows (Docker Desktop): host.docker.internal resolves automatically.
+      # On Linux: run with --add-host=host.docker.internal:host-gateway, or override:
+      #   OLLAMA_BASE_URL=http://172.17.0.1:11434 docker compose up
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      VOICE_SERVICE_URL: ${VOICE_SERVICE_URL:-http://host.docker.internal:8002}
+      KMP_DUPLICATE_LIB_OK: "TRUE"
+    volumes:
+      # Voice sample for Coqui cloning
+      - ./voice_data:/app/voice_data:ro
+      # Coqui model cache (avoid re-downloading 2GB on each build)
+      - ~/.local/share/tts:/root/.local/share/tts
+      # FAISS vector store if pre-built
+      - ./data:/app/data:ro
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: chaima-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

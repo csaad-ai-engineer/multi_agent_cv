@@ -1,0 +1,33 @@
+# LLM & Agents
+langchain==0.3.25
+langchain-community==0.3.24
+langchain-ollama==0.3.3
+langgraph==0.4.8
+langsmith==0.3.45
+
+# Vector store
+faiss-cpu>=1.12.0
+tiktoken==0.9.0
+
+# PDF parsing
+pypdf==5.5.0
+
+# API
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+python-multipart==0.0.20
+
+# Voice — STT
+openai-whisper==20240930
+
+# Voice — TTS (Coqui XTTS v2)
+coqui-tts[codec]==0.27.5
+torchaudio
+transformers==4.57.0
+
+# Utils
+python-dotenv==1.1.0
+pydantic==2.11.5
+httpx==0.28.1
+pytesseract
+Pillow

@@ -1,0 +1,92 @@
+CHAIMA SAAD
+Ingénieure R&D IA Générative | LLM • Agents IA • RAG • MLOps • FastAPI • LangGraph
+
+CONTACT
+Email: zidisaad.chaima@gmail.com
+Téléphone: +33 758.949.591
+GitHub: https://github.com/CSAADZIDI
+Localisation: France
+Permis B
+
+PROFIL
+Docteure en informatique et AI Engineer spécialisée dans la conception de systèmes d'IA générative basés sur les LLM, RAG et architectures agentiques. Expérience en développement Python, APIs IA, pipelines de données et industrialisation de solutions IA via Docker, CI/CD et Cloud. Intérêt particulier pour l'orchestration d'agents, l'évaluation des modèles et l'application de l'IA générative à des problématiques métier complexes.
+
+COMPÉTENCES TECHNIQUES
+
+IA Générative & Agentique:
+- LangGraph, LangChain
+- LLM engineering
+- RAG, MCP, A2A
+- Prompt engineering
+
+Machine / Deep Learning:
+- Python
+- scikit-learn, TensorFlow
+- Évaluation & monitoring de modèles
+
+APIs & Architecture:
+- APIs REST (FastAPI, Flask)
+- Microservices IA
+- Design de systèmes GenAI
+- Intégration des modèles dans des applications (OpenAI API...)
+
+Data Engineering:
+- Pipelines de données
+- Ingestion / transformation
+- Qualité des données
+- PostgreSQL, Chroma, Neo4j
+
+MLOps & Industrialisation:
+- Azure AI Services
+- Docker
+- CI/CD, GitHub Actions
+- Airflow
+- Versioning des modèles, MLflow
+
+EXPÉRIENCES PROFESSIONNELLES
+
+Ingénieure Logiciel / Data — IMT Nord Europe, Lille, France
+D'avril 2023 à août 2024
+- Conception et développement de pipelines de traitement et d'exploitation de données pour des cas d'usage métiers
+- Participation à la mise en production de services IA (API, pipelines)
+- Collaboration avec experts métier pour la traduction des besoins opérationnels
+
+Chargée de Projet Innovation - Systèmes distribués & Data — ULCO, Calais, France
+De février 2022 à mars 2023
+- Analyse d'architectures distribuées (Edge / Cloud / Data)
+- Veille technologique (sécurité, traçabilité, gouvernance des données)
+- Traduction de problématiques métiers en solutions data
+
+Autres expériences: De 2012 à 2019
+
+PROJETS IA & DATA
+
+Agent conversationnel RAG (LangChain, Chroma):
+Conception d'un agent RAG complet : ingestion, indexation, tool usage et intégration avec des APIs externes.
+
+Orchestration d'agents LLM (LangGraph):
+Conception de workflows multi-agents avec coordination de tâches et tool usage.
+
+FORMATION & CERTIFICATIONS
+
+Certification Professionnelle Développeur IA / Data — Simplon, Lille (2026)
+- Machine / Deep Learning, Data Engineering, API, MLOps, GenIA, Agent IA, RAG, CI/CD, Cloud Azure
+- Projets pratiques en équipe
+
+Microsoft Certified: Azure Fundamentals (AZ900) & Azure AI Fundamentals (AI900) — Microsoft France (2026)
+
+Ph.D en Informatique & Réseaux — Université Paris Descartes (2018)
+
+LANGUES
+- Français: bilingue
+- Anglais: professionnel
+- Arabe: natif
+
+SOFT SKILLS
+- Esprit analytique & résolution de problèmes
+- Curiosité & veille technologique
+- Autonomie & expérimentation
+- Rigueur & adaptabilité
+
+VEILLE & RECHERCHE
+Agentic AI, LLM Evaluation, VLM

@@ -1,0 +1,32 @@
+# Secrets
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv*/
+*.egg-info/
+
+# Virtual envs
+.venv312/
+
+# Test cache
+.pytest_cache/
+
+# FAISS index (large binary, rebuild from raw data)
+backend/data/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# macOS
+.DS_Store
+
+# Audio test files
+test.wav
+test_voice.wav
+
+# TTS model cache (very large)
+~/.local/share/tts
