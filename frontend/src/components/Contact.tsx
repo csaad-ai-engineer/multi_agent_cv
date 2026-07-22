@@ -1,7 +1,7 @@
 const LINKS = [
-  { label: "Email", value: "zidisaad.chaima@gmail.com", href: "mailto:zidisaad.chaima@gmail.com", icon: "✉️" },
+  { label: "Email", value: "chaima.zidi.ingia@gmail.com", href: "mailto:chaima.zidi.ingia@gmail.com", icon: "✉️" },
   { label: "Phone", value: "+33 758 949 591", href: "tel:+33758949591", icon: "📞" },
-  { label: "GitHub", value: "github.com/CSAADZIDI", href: "https://github.com/CSAADZIDI", icon: "🐙" },
+  { label: "GitHub", value: "github.com/csaad-ai-engineer", href: "https://github.com/csaad-ai-engineer", icon: "🐙" },
   { label: "Location", value: "France", href: null, icon: "📍" },
 ]
 

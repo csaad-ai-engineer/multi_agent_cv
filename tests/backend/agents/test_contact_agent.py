@@ -14,7 +14,7 @@ def _mock_chain(answer: str):
 
 def test_answer_contact_question_returns_string():
     with patch("backend.agents.contact_agent.get_llm") as MockLLM:
-        MockLLM.return_value.__or__ = MagicMock(return_value=_mock_chain("You can reach her at zidisaad.chaima@gmail.com"))
+        MockLLM.return_value.__or__ = MagicMock(return_value=_mock_chain("You can reach her at chaima.zidi.ingia@gmail.com"))
 
         from backend.agents.contact_agent import answer_contact_question
         result = answer_contact_question("How can I contact Chaima?")
@@ -37,14 +37,14 @@ def test_answer_contact_question_passes_question():
 
 def test_contact_info_contains_real_data():
     from backend.agents.contact_agent import CONTACT_INFO
-    assert "zidisaad.chaima@gmail.com" in CONTACT_INFO
+    assert "chaima.zidi.ingia@gmail.com" in CONTACT_INFO
     assert "+33 758.949.591" in CONTACT_INFO
-    assert "github.com/CSAADZIDI" in CONTACT_INFO
+    assert "github.com/csaad-ai-engineer" in CONTACT_INFO
     assert "France" in CONTACT_INFO
 
 
 def test_answer_contact_returns_llm_content():
-    expected = "Her email is zidisaad.chaima@gmail.com."
+    expected = "Her email is chaima.zidi.ingia@gmail.com."
     with patch("backend.agents.contact_agent.get_llm") as MockLLM:
         MockLLM.return_value.__or__ = MagicMock(return_value=_mock_chain(expected))
 

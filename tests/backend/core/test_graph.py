@@ -98,14 +98,14 @@ def test_projects_node_calls_projects_agent():
 
 def test_contact_node_calls_contact_agent():
     with patch("backend.core.graph.answer_contact_question") as MockContact:
-        MockContact.return_value = "Email: zidisaad.chaima@gmail.com"
+        MockContact.return_value = "Email: chaima.zidi.ingia@gmail.com"
 
         from backend.core.graph import contact_node
         state: AgentState = {"question": "Contact?", "route": "contact", "answer": ""}
         result = contact_node(state)
 
         MockContact.assert_called_once_with("Contact?")
-        assert result["answer"] == "Email: zidisaad.chaima@gmail.com"
+        assert result["answer"] == "Email: chaima.zidi.ingia@gmail.com"
 
 
 # --------------------------------------------------------------------------

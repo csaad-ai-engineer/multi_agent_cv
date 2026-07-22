@@ -1,92 +1,54 @@
 """
 Edge case and error handling tests for backend/voice/tts.py
 """
-import pytest
 from unittest.mock import patch, MagicMock
 
-
-def test_synthesize_speech_raises_on_elevenlabs_api_failure():
-    mock_client = MagicMock()
-    mock_client.text_to_speech.convert.side_effect = Exception("ElevenLabs API error")
-
-    with patch("backend.voice.tts._client", mock_client):
-        from backend.voice.tts import synthesize_speech
-        with pytest.raises(Exception, match="ElevenLabs API error"):
-            synthesize_speech("Hello")
+import pytest
 
 
-def test_synthesize_speech_with_empty_generator_returns_empty_bytes():
-    mock_client = MagicMock()
-    mock_client.text_to_speech.convert.return_value = iter([])
+def test_synthesize_speech_uses_custom_voice_service_url(monkeypatch):
+    monkeypatch.setenv("VOICE_SERVICE_URL", "http://custom-host:9999")
+    mock_response = MagicMock(status_code=200, content=b"audio")
+    mock_response.raise_for_status.return_value = None
 
-    with patch("backend.voice.tts._client", mock_client):
-        from backend.voice.tts import synthesize_speech
-        result = synthesize_speech("Hello")
+    with patch("backend.voice.tts.httpx.post", return_value=mock_response) as mock_post:
+        import importlib
+        import backend.voice.tts as tts
+        importlib.reload(tts)
 
-    assert result == b""
+        tts.synthesize_speech("test")
 
-
-def test_synthesize_speech_with_empty_text():
-    mock_client = MagicMock()
-    mock_client.text_to_speech.convert.return_value = iter([b"audio"])
-
-    with patch("backend.voice.tts._client", mock_client):
-        from backend.voice.tts import synthesize_speech
-        result = synthesize_speech("")
-
-    call_kwargs = mock_client.text_to_speech.convert.call_args.kwargs
-    assert call_kwargs["text"] == ""
-    assert isinstance(result, bytes)
+    assert mock_post.call_args.args[0] == "http://custom-host:9999/tts"
 
 
-def test_synthesize_speech_voice_settings_values():
-    mock_client = MagicMock()
-    mock_client.text_to_speech.convert.return_value = iter([b"audio"])
+def test_synthesize_speech_uses_timeout():
+    mock_response = MagicMock(status_code=200, content=b"audio")
+    mock_response.raise_for_status.return_value = None
 
-    with patch("backend.voice.tts._client", mock_client), \
-         patch("backend.voice.tts.VoiceSettings") as MockVoiceSettings:
-
+    with patch("backend.voice.tts.httpx.post", return_value=mock_response) as mock_post:
         from backend.voice.tts import synthesize_speech
         synthesize_speech("test")
 
-        MockVoiceSettings.assert_called_once_with(
-            stability=0.5,
-            similarity_boost=0.8,
-            style=0.2,
-            use_speaker_boost=True,
-        )
+    assert mock_post.call_args.kwargs["timeout"] == 120
+
+
+def test_synthesize_speech_400_without_detail_uses_fallback_message():
+    mock_response = MagicMock(status_code=400)
+    mock_response.json.return_value = {}
+
+    with patch("backend.voice.tts.httpx.post", return_value=mock_response):
+        from backend.voice.tts import synthesize_speech
+        with pytest.raises(ValueError, match="TTS error"):
+            synthesize_speech("test")
 
 
 def test_synthesize_speech_with_french_text():
-    mock_client = MagicMock()
-    mock_client.text_to_speech.convert.return_value = iter([b"chunk_fr"])
+    mock_response = MagicMock(status_code=200, content=b"chunk_fr")
+    mock_response.raise_for_status.return_value = None
 
-    with patch("backend.voice.tts._client", mock_client):
+    with patch("backend.voice.tts.httpx.post", return_value=mock_response) as mock_post:
         from backend.voice.tts import synthesize_speech
         result = synthesize_speech("Bonjour, je suis Chaima.")
 
-    call_kwargs = mock_client.text_to_speech.convert.call_args.kwargs
-    assert call_kwargs["text"] == "Bonjour, je suis Chaima."
+    assert mock_post.call_args.kwargs["json"]["question"] == "Bonjour, je suis Chaima."
     assert result == b"chunk_fr"
-
-
-def test_synthesize_speech_raises_on_client_init_failure():
-    with patch("backend.voice.tts._client", None), \
-         patch("backend.voice.tts.ElevenLabs") as MockClient:
-
-        MockClient.side_effect = Exception("invalid API key")
-
-        from backend.voice.tts import synthesize_speech
-        with pytest.raises(Exception, match="invalid API key"):
-            synthesize_speech("Hello")
-
-
-def test_synthesize_speech_concatenates_multiple_chunks():
-    mock_client = MagicMock()
-    mock_client.text_to_speech.convert.return_value = iter([b"part1", b"part2", b"part3"])
-
-    with patch("backend.voice.tts._client", mock_client):
-        from backend.voice.tts import synthesize_speech
-        result = synthesize_speech("Long text response.")
-
-    assert result == b"part1part2part3"

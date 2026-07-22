@@ -13,13 +13,13 @@ export default function Hero() {
       </p>
       <div className="flex flex-wrap gap-4 justify-center mb-12">
         <a
-          href="mailto:zidisaad.chaima@gmail.com"
+          href="mailto:chaima.zidi.ingia@gmail.com"
           className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-indigo-500 transition"
         >
           Get in touch
         </a>
         <a
-          href="https://github.com/CSAADZIDI"
+          href="https://github.com/csaad-ai-engineer"
           target="_blank"
           rel="noopener noreferrer"
           className="px-6 py-3 border border-slate-600 text-slate-300 rounded-lg font-medium hover:border-primary hover:text-primary transition"

@@ -6,9 +6,9 @@ from backend.core.llm import get_llm
 
 CONTACT_INFO = """
 CHAIMA SAAD — Contact Information
-Email: zidisaad.chaima@gmail.com
+Email: chaima.zidi.ingia@gmail.com
 Phone: +33 758.949.591
-GitHub: https://github.com/CSAADZIDI
+GitHub: https://github.com/csaad-ai-engineer
 Location: France
 Driver's license: Yes (Permis B)
 Languages: French (bilingual), English (professional), Arabic (native)

@@ -1,96 +1,56 @@
 """
 Edge case and error handling tests for backend/voice/stt.py
 """
-import pytest
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock
 
 
-def test_transcribe_audio_raises_on_whisper_failure():
-    mock_model = MagicMock()
-    mock_model.transcribe.side_effect = RuntimeError("model inference failed")
+def test_transcribe_audio_uses_custom_voice_service_url(monkeypatch):
+    monkeypatch.setenv("VOICE_SERVICE_URL", "http://custom-host:9999")
+    mock_response = MagicMock(status_code=200)
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {"text": "test"}
 
-    with patch("backend.voice.stt._model", mock_model), \
-         patch("tempfile.NamedTemporaryFile", mock_open()):
+    with patch("backend.voice.stt.httpx.post", return_value=mock_response) as mock_post:
+        import importlib
+        import backend.voice.stt as stt
+        importlib.reload(stt)
 
-        from backend.voice.stt import transcribe_audio
-        with pytest.raises(RuntimeError, match="model inference failed"):
-            transcribe_audio(b"audio bytes")
+        stt.transcribe_audio(b"audio")
 
-
-def test_transcribe_audio_raises_on_model_load_failure():
-    with patch("backend.voice.stt._model", None), \
-         patch("backend.voice.stt.whisper") as MockWhisper, \
-         patch("tempfile.NamedTemporaryFile", mock_open()):
-
-        MockWhisper.load_model.side_effect = Exception("model download failed")
-
-        from backend.voice.stt import transcribe_audio
-        with pytest.raises(Exception, match="model download failed"):
-            transcribe_audio(b"audio bytes")
+    assert mock_post.call_args.args[0] == "http://custom-host:9999/stt"
 
 
-def test_transcribe_audio_returns_empty_string_when_whisper_returns_empty():
-    mock_model = MagicMock()
-    mock_model.transcribe.return_value = {"text": "   "}
+def test_transcribe_audio_uses_timeout():
+    mock_response = MagicMock(status_code=200)
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {"text": "test"}
 
-    with patch("backend.voice.stt._model", mock_model), \
-         patch("tempfile.NamedTemporaryFile", mock_open()):
-
-        from backend.voice.stt import transcribe_audio
-        result = transcribe_audio(b"silence")
-
-        assert result == ""
-
-
-def test_transcribe_audio_passes_fp16_false():
-    mock_model = MagicMock()
-    mock_model.transcribe.return_value = {"text": "hello"}
-
-    with patch("backend.voice.stt._model", mock_model), \
-         patch("tempfile.NamedTemporaryFile", mock_open()):
-
+    with patch("backend.voice.stt.httpx.post", return_value=mock_response) as mock_post:
         from backend.voice.stt import transcribe_audio
         transcribe_audio(b"audio")
 
-        call_kwargs = mock_model.transcribe.call_args.kwargs
-        assert call_kwargs.get("fp16") is False
+    assert mock_post.call_args.kwargs["timeout"] == 120
 
 
 def test_transcribe_audio_handles_french_output():
-    mock_model = MagicMock()
-    mock_model.transcribe.return_value = {"text": "Bonjour, je m'appelle Chaima."}
+    mock_response = MagicMock(status_code=200)
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {"text": "Bonjour, je m'appelle Chaima."}
 
-    with patch("backend.voice.stt._model", mock_model), \
-         patch("tempfile.NamedTemporaryFile", mock_open()):
-
+    with patch("backend.voice.stt.httpx.post", return_value=mock_response):
         from backend.voice.stt import transcribe_audio
-        result = transcribe_audio(b"french audio", language="fr")
+        result = transcribe_audio(b"french audio")
 
-        assert result == "Bonjour, je m'appelle Chaima."
+    assert result == "Bonjour, je m'appelle Chaima."
 
+def test_transcribe_audio_sends_webm_content_type():
+    mock_response = MagicMock(status_code=200)
+    mock_response.raise_for_status.return_value = None
+    mock_response.json.return_value = {"text": "hello"}
 
-def test_transcribe_audio_with_english_language_param():
-    mock_model = MagicMock()
-    mock_model.transcribe.return_value = {"text": "Hello, my name is Chaima."}
-
-    with patch("backend.voice.stt._model", mock_model), \
-         patch("tempfile.NamedTemporaryFile", mock_open()):
-
+    with patch("backend.voice.stt.httpx.post", return_value=mock_response) as mock_post:
         from backend.voice.stt import transcribe_audio
-        transcribe_audio(b"english audio", language="en")
+        transcribe_audio(b"audio")
 
-        call_kwargs = mock_model.transcribe.call_args.kwargs
-        assert call_kwargs.get("language") == "en"
-
-
-def test_transcribe_audio_handles_empty_bytes():
-    mock_model = MagicMock()
-    mock_model.transcribe.return_value = {"text": ""}
-
-    with patch("backend.voice.stt._model", mock_model), \
-         patch("tempfile.NamedTemporaryFile", mock_open()):
-
-        from backend.voice.stt import transcribe_audio
-        result = transcribe_audio(b"")
-
-        assert result == ""
+    _, _, content_type = mock_post.call_args.kwargs["files"]["audio"]
+    assert content_type == "audio/webm"
