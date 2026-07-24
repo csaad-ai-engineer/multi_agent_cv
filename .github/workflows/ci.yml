@@ -17,7 +17,12 @@ jobs:
           python-version: "3.12"
 
       - name: Install backend dependencies
-        run: pip install -r requirements.txt
+        run: |
+          # openai-whisper's setup.py needs an older setuptools and no build
+          # isolation to build cleanly — same workaround as backend/Dockerfile.
+          pip install "setuptools<71" wheel
+          pip install --no-build-isolation openai-whisper==20240930
+          pip install -r requirements.txt
 
       - name: Run backend test suite
         run: pytest tests/ -q
@@ -34,8 +39,16 @@ jobs:
       - name: Install pip-audit
         run: pip install pip-audit
 
-      - name: Audit Python dependencies for known vulnerabilities
-        run: pip-audit -r requirements.txt --strict
+      - name: Install backend dependencies
+        run: |
+          # Same build workaround as the test job — pip-audit resolves/builds
+          # requirements.txt too, and openai-whisper needs this to build cleanly.
+          pip install "setuptools<71" wheel
+          pip install --no-build-isolation openai-whisper==20240930
+          pip install -r requirements.txt
+
+      - name: Audit installed Python dependencies for known vulnerabilities
+        run: pip-audit --strict
         continue-on-error: true # advisory for now — don't block merges on transitive CVEs
 
   frontend-build:
