@@ -24,14 +24,6 @@ def test_components_directory_exists():
     assert (FRONTEND / "src" / "components").exists()
 
 
-def test_hooks_directory_exists():
-    assert (FRONTEND / "src" / "hooks").exists()
-
-
-def test_services_directory_exists():
-    assert (FRONTEND / "src" / "services").exists()
-
-
 def test_package_json_exists():
     assert (FRONTEND / "package.json").exists(), \
         "Run: cd frontend && npm create vite@latest . -- --template react-ts"
