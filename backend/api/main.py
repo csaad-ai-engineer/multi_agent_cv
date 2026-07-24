@@ -4,16 +4,21 @@ FastAPI server — exposes the multi-agent graph as HTTP endpoints.
 Endpoints:
   POST /chat        → text question → text answer
   POST /voice/stt   → audio file → transcribed text
-  POST /voice/tts   → text → audio (ElevenLabs cloned voice)
+  POST /voice/tts   → text → audio (Coqui XTTS v2 cloned voice)
   GET  /health      → server status check
 """
 import io
+import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, Request, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
-from backend.core.graph import ask
+from backend.core.graph import cv_agent_graph
+from backend.core.safety import looks_like_injection, enforce_answer_limits, REFUSAL_MESSAGE
 from backend.voice.stt import transcribe_audio
 from backend.voice.tts import synthesize_speech
 
@@ -29,10 +34,20 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Chaima SAAD — CV Agent API", lifespan=lifespan)
 
-# Allow the React frontend (on a different port) to call this API
+# Rate limiting — protects the (self-hosted) LLM/voice services from abuse.
+# Keyed by client IP since this is an unauthenticated public API.
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Allow the React frontend to call this API.
+# Configure via ALLOWED_ORIGINS (comma-separated) in production; defaults cover local dev.
+_default_origins = "http://localhost:5173,http://localhost:80,http://localhost"
+allowed_origins = os.getenv("ALLOWED_ORIGINS", _default_origins).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # restrict to your domain in production
+    allow_origins=allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -53,15 +68,20 @@ def health():
 
 
 @app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
+@limiter.limit("15/minute")
+def chat(request: Request, chat_request: ChatRequest):
     """Main text chat endpoint used by the frontend."""
-    from backend.core.graph import cv_agent_graph
-    result = cv_agent_graph.invoke({"question": request.question})
-    return ChatResponse(answer=result["answer"], route=result.get("route", ""))
+    if looks_like_injection(chat_request.question):
+        return ChatResponse(answer=REFUSAL_MESSAGE, route="refused")
+
+    result = cv_agent_graph.invoke({"question": chat_request.question})
+    answer = enforce_answer_limits(result["answer"])
+    return ChatResponse(answer=answer, route=result.get("route", ""))
 
 
 @app.post("/voice/stt")
-async def speech_to_text(audio: UploadFile = File(...)):
+@limiter.limit("15/minute")
+async def speech_to_text(request: Request, audio: UploadFile = File(...)):
     """Convert uploaded audio to text using Whisper."""
     audio_bytes = await audio.read()
     text = transcribe_audio(audio_bytes)
@@ -69,11 +89,12 @@ async def speech_to_text(audio: UploadFile = File(...)):
 
 
 @app.post("/voice/tts")
-async def text_to_speech(request: ChatRequest):
+@limiter.limit("15/minute")
+async def text_to_speech(request: Request, chat_request: ChatRequest):
     """Convert text to audio using Coqui XTTS v2 (local voice cloning)."""
     from fastapi.responses import StreamingResponse
     try:
-        audio_bytes = synthesize_speech(request.question)
+        audio_bytes = synthesize_speech(chat_request.question)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return StreamingResponse(io.BytesIO(audio_bytes), media_type="audio/wav")

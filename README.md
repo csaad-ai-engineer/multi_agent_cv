@@ -168,6 +168,19 @@ pytest tests/
 - TTS responses are truncated to 60 words to keep synthesis fast. Language (French/English) is auto-detected.
 - `.env` is intentionally excluded from version control — never commit secrets.
 
+### Every time you run the project, remember:
+
+- **`docker compose up` alone is not enough** — it only starts the backend + frontend containers. The voice service (`services/voice_service.py`) is *not* managed by Docker Compose and must be started separately on the host every time (it does not survive a reboot or restart):
+  ```bash
+  source .venv312/bin/activate
+  python services/voice_service.py
+  ```
+  Without it, the mic/voice chat page fails with "Something went wrong. Is the backend running?" — text chat still works fine since it doesn't depend on the voice service.
+- First startup of the voice service is slow (10–20s+): it loads Whisper, loads Coqui XTTS v2, and encodes the voice sample (`voice_data/voice_sample.mp3`) into conditioning latents before it's ready to serve requests.
+- Ollama must already be running locally (`ollama serve`, or the menu-bar app) with `llama3.1:8b` and `nomic-embed-text` pulled — the backend container calls it via `host.docker.internal:11434`, which only resolves from inside Docker (not from a host-run process).
+- If you edit `raw_data/` (CV content), the FAISS index rebuilds automatically on the next backend start — no manual step needed.
+- CORS is restricted via `ALLOWED_ORIGINS` in `.env` (defaults to `localhost:5173`, `localhost:80`, `localhost`). If you serve the frontend from a different origin, add it there or cross-origin requests will be rejected.
+
 ---
 
 ## Author

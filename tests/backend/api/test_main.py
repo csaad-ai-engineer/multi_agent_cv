@@ -67,7 +67,7 @@ def test_voice_tts_endpoint_returns_audio(client):
         response = client.post("/voice/tts", json={"question": "Hello, I am Chaima."})
 
     assert response.status_code == 200
-    assert response.headers["content-type"] == "audio/mpeg"
+    assert response.headers["content-type"] == "audio/wav"
     assert response.content == b"fake mp3 audio bytes"
 
 

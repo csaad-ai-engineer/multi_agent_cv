@@ -1,10 +1,17 @@
 """
 Tests for backend/agents/contact_agent.py
+
+WHY WE PATCH THE PROMPT DIRECTLY:
+The source code does: `chain = CONTACT_PROMPT | llm`
+Because ChatPromptTemplate is stubbed, CONTACT_PROMPT is already a MagicMock
+at import time, and MagicMock defines its own `__or__`. Patching `get_llm`
+alone doesn't control the result of `CONTACT_PROMPT | llm` — we must patch
+CONTACT_PROMPT itself so we control what `.invoke()` returns.
 """
 from unittest.mock import patch, MagicMock
 
 
-def _mock_chain(answer: str):
+def _make_chain(answer: str):
     mock_result = MagicMock()
     mock_result.content = answer
     mock_chain = MagicMock()
@@ -13,8 +20,10 @@ def _mock_chain(answer: str):
 
 
 def test_answer_contact_question_returns_string():
-    with patch("backend.agents.contact_agent.get_llm") as MockLLM:
-        MockLLM.return_value.__or__ = MagicMock(return_value=_mock_chain("You can reach her at chaima.zidi.ingia@gmail.com"))
+    mock_chain = _make_chain("You can reach her at chaima.zidi.ingia@gmail.com")
+    with patch("backend.agents.contact_agent.CONTACT_PROMPT") as MockPrompt, \
+         patch("backend.agents.contact_agent.get_llm"):
+        MockPrompt.__or__ = MagicMock(return_value=mock_chain)
 
         from backend.agents.contact_agent import answer_contact_question
         result = answer_contact_question("How can I contact Chaima?")
@@ -24,10 +33,10 @@ def test_answer_contact_question_returns_string():
 
 
 def test_answer_contact_question_passes_question():
-    with patch("backend.agents.contact_agent.get_llm") as MockLLM:
-        mock_chain = MagicMock()
-        mock_chain.invoke.return_value = MagicMock(content="answer")
-        MockLLM.return_value.__or__ = MagicMock(return_value=mock_chain)
+    mock_chain = _make_chain("answer")
+    with patch("backend.agents.contact_agent.CONTACT_PROMPT") as MockPrompt, \
+         patch("backend.agents.contact_agent.get_llm"):
+        MockPrompt.__or__ = MagicMock(return_value=mock_chain)
 
         from backend.agents.contact_agent import answer_contact_question
         answer_contact_question("What is her email?")
@@ -45,8 +54,10 @@ def test_contact_info_contains_real_data():
 
 def test_answer_contact_returns_llm_content():
     expected = "Her email is chaima.zidi.ingia@gmail.com."
-    with patch("backend.agents.contact_agent.get_llm") as MockLLM:
-        MockLLM.return_value.__or__ = MagicMock(return_value=_mock_chain(expected))
+    mock_chain = _make_chain(expected)
+    with patch("backend.agents.contact_agent.CONTACT_PROMPT") as MockPrompt, \
+         patch("backend.agents.contact_agent.get_llm"):
+        MockPrompt.__or__ = MagicMock(return_value=mock_chain)
 
         from backend.agents.contact_agent import answer_contact_question
         result = answer_contact_question("Contact?")

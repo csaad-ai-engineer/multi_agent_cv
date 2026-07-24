@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 
 const API_URL = import.meta.env.VITE_API_URL || "/api"
 
-type State = "idle" | "listening" | "thinking" | "speaking"
+type State = "idle" | "listening" | "confirming" | "thinking" | "speaking"
 
 interface Turn {
   user: string
@@ -11,15 +11,17 @@ interface Turn {
 }
 
 const ORB_CONFIG: Record<State, { color: string; glow: string; label: string; speed: string }> = {
-  idle:      { color: "#6366f1", glow: "rgba(99,102,241,0.5)",  label: "Tap to speak",  speed: "3s" },
-  listening: { color: "#ef4444", glow: "rgba(239,68,68,0.6)",   label: "Listening…",    speed: "0.8s" },
-  thinking:  { color: "#f59e0b", glow: "rgba(245,158,11,0.5)",  label: "Thinking…",     speed: "1.5s" },
-  speaking:  { color: "#22c55e", glow: "rgba(34,197,94,0.5)",   label: "Speaking…",     speed: "1s" },
+  idle:       { color: "#6366f1", glow: "rgba(99,102,241,0.5)",  label: "Tap to speak",     speed: "3s" },
+  listening:  { color: "#ef4444", glow: "rgba(239,68,68,0.6)",   label: "Listening…",       speed: "0.8s" },
+  confirming: { color: "#818cf8", glow: "rgba(129,140,248,0.5)", label: "Review & confirm", speed: "3s" },
+  thinking:   { color: "#f59e0b", glow: "rgba(245,158,11,0.5)",  label: "Thinking…",        speed: "1.5s" },
+  speaking:   { color: "#22c55e", glow: "rgba(34,197,94,0.5)",   label: "Speaking…",        speed: "1s" },
 }
 
 export default function Persona() {
   const [state, setState] = useState<State>("idle")
   const [transcript, setTranscript] = useState("")
+  const [draft, setDraft] = useState("")
   const [answer, setAnswer] = useState("")
   const [history, setHistory] = useState<Turn[]>([])
   const [error, setError] = useState("")
@@ -75,7 +77,7 @@ export default function Persona() {
 
   async function processAudio() {
     try {
-      // 1. Speech → Text
+      // Speech → Text
       const blob = new Blob(chunksRef.current, { type: "audio/webm" })
       const form = new FormData()
       form.append("audio", blob, "recording.webm")
@@ -87,9 +89,29 @@ export default function Persona() {
         setState("idle")
         return
       }
+      // Hand off to the user for review before it's sent anywhere
       setTranscript(question)
+      setDraft(question)
+      setState("confirming")
+    } catch (e) {
+      setError("Something went wrong. Is the backend running?")
+      setState("idle")
+    }
+  }
 
-      // 2. Text → Answer
+  function cancelConfirmation() {
+    setTranscript("")
+    setDraft("")
+    setState("idle")
+  }
+
+  async function sendQuestion() {
+    const question = draft.trim()
+    if (!question) return
+    setTranscript(question)
+    setState("thinking")
+    try {
+      // Text → Answer
       const chatRes = await fetch(`${API_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -99,7 +121,7 @@ export default function Persona() {
       const reply = chatData.answer
       setAnswer(reply)
 
-      // 3. Answer → Speech
+      // Answer → Speech
       const ttsRes = await fetch(`${API_URL}/voice/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -115,6 +137,7 @@ export default function Persona() {
         URL.revokeObjectURL(audioUrl)
         setHistory((h) => [...h, { user: question, assistant: reply }])
         setTranscript("")
+        setDraft("")
         setAnswer("")
         setState("idle")
       }
@@ -176,8 +199,36 @@ export default function Persona() {
           <div ref={historyEndRef} />
         </div>
 
+        {/* Editable transcript — review before sending */}
+        {state === "confirming" && (
+          <div className="w-full max-w-md mx-auto mb-4 space-y-3">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              autoFocus
+              rows={3}
+              className="w-full resize-none rounded-xl border border-slate-700 bg-slate-900 text-slate-200 text-sm px-4 py-3 focus:outline-none focus:border-indigo-400 transition"
+            />
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={cancelConfirmation}
+                className="px-4 py-2 rounded-full text-xs font-mono tracking-wide text-slate-400 border border-slate-700 hover:text-slate-200 hover:border-slate-500 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={sendQuestion}
+                disabled={!draft.trim()}
+                className="px-4 py-2 rounded-full text-xs font-mono tracking-wide text-white bg-indigo-500 hover:bg-indigo-400 disabled:opacity-40 disabled:hover:bg-indigo-500 transition"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Live transcript */}
-        {(transcript || answer) && (
+        {state !== "confirming" && (transcript || answer) && (
           <div className="w-full text-center mb-4 space-y-2">
             {transcript && (
               <p className="text-slate-400 text-sm italic">"{transcript}"</p>
@@ -204,7 +255,7 @@ export default function Persona() {
 
         <button
           onClick={handleOrbClick}
-          disabled={state === "thinking" || state === "speaking"}
+          disabled={state === "thinking" || state === "speaking" || state === "confirming"}
           className="relative focus:outline-none group"
           aria-label={state === "listening" ? "Stop recording" : "Start recording"}
         >
@@ -250,10 +301,11 @@ export default function Persona() {
 
           {/* Icon overlay */}
           <span className="absolute inset-0 flex items-center justify-center text-3xl pointer-events-none">
-            {state === "idle"     && "🎙️"}
-            {state === "listening" && "⏹"}
-            {state === "thinking" && "✦"}
-            {state === "speaking" && "🔊"}
+            {state === "idle"       && "🎙️"}
+            {state === "listening"  && "⏹"}
+            {state === "confirming" && "✏️"}
+            {state === "thinking"   && "✦"}
+            {state === "speaking"   && "🔊"}
           </span>
         </button>
 

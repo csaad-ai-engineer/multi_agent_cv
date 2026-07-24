@@ -34,7 +34,7 @@ def client_no_raise():
 
 
 def test_chat_endpoint_with_empty_question(client):
-    with patch("backend.core.graph.cv_agent_graph") as MockGraph:
+    with patch("backend.api.main.cv_agent_graph") as MockGraph:
         MockGraph.invoke.return_value = {"answer": "Please provide a question.", "route": "cv_rag"}
         response = client.post("/chat", json={"question": ""})
 
@@ -44,7 +44,7 @@ def test_chat_endpoint_with_empty_question(client):
 
 def test_chat_endpoint_with_very_long_question(client):
     long_question = "Tell me about Chaima. " * 300
-    with patch("backend.core.graph.cv_agent_graph") as MockGraph:
+    with patch("backend.api.main.cv_agent_graph") as MockGraph:
         MockGraph.invoke.return_value = {"answer": "She is an AI engineer.", "route": "cv_rag"}
         response = client.post("/chat", json={"question": long_question})
 
@@ -62,7 +62,7 @@ def test_chat_endpoint_rejects_invalid_json(client):
 
 
 def test_chat_endpoint_returns_500_on_graph_exception(client_no_raise):
-    with patch("backend.core.graph.cv_agent_graph") as MockGraph:
+    with patch("backend.api.main.cv_agent_graph") as MockGraph:
         MockGraph.invoke.side_effect = Exception("graph internal error")
         response = client_no_raise.post("/chat", json={"question": "What are her skills?"})
 
@@ -70,7 +70,7 @@ def test_chat_endpoint_returns_500_on_graph_exception(client_no_raise):
 
 
 def test_chat_response_includes_route_field(client):
-    with patch("backend.core.graph.cv_agent_graph") as MockGraph:
+    with patch("backend.api.main.cv_agent_graph") as MockGraph:
         MockGraph.invoke.return_value = {"answer": "answer", "route": "projects"}
         response = client.post("/chat", json={"question": "What projects did she build?"})
 
@@ -78,7 +78,7 @@ def test_chat_response_includes_route_field(client):
 
 
 def test_chat_response_route_defaults_to_empty_string_when_missing(client):
-    with patch("backend.core.graph.cv_agent_graph") as MockGraph:
+    with patch("backend.api.main.cv_agent_graph") as MockGraph:
         MockGraph.invoke.return_value = {"answer": "some answer"}
         response = client.post("/chat", json={"question": "Tell me about yourself."})
 
@@ -98,7 +98,7 @@ def test_voice_tts_with_empty_text(client):
         response = client.post("/voice/tts", json={"question": ""})
 
     assert response.status_code == 200
-    assert response.headers["content-type"] == "audio/mpeg"
+    assert response.headers["content-type"] == "audio/wav"
 
 
 def test_voice_tts_returns_500_on_synthesis_failure(client_no_raise):

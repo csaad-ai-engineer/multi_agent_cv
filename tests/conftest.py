@@ -37,7 +37,9 @@ _EXTERNAL_PACKAGES = [
     "langchain",
     "langchain.prompts",
     "langchain.chains",
+    "langchain.schema",
     "langchain_openai",
+    "langchain_ollama",
     "langchain_community",
     "langchain_community.document_loaders",
     "langchain_community.vectorstores",
@@ -68,10 +70,9 @@ sys.modules["langgraph.graph"].StateGraph = MagicMock()
 if "dotenv" not in sys.modules:
     sys.modules["dotenv"] = MagicMock()
 
-# python-multipart — required by FastAPI for file uploads
-if "multipart" not in sys.modules:
-    sys.modules["multipart"] = MagicMock()
-    sys.modules["python_multipart"] = MagicMock()
+# NOTE: python-multipart is a real, required dependency for FastAPI's file-upload
+# endpoints (used by /voice/stt) — install it (it's in requirements.txt), don't stub it.
+# Stubbing it breaks FastAPI's own multipart-availability check.
 
 
 # ---------------------------------------------------------------------------

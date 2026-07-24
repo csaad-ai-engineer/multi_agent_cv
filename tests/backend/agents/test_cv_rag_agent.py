@@ -7,8 +7,23 @@ What we test:
 - The chain returns an answer when invoked
 
 The vector store and LLM are mocked.
+
+WHY WE RESET _chain BEFORE EACH TEST:
+get_cv_rag_chain() caches its result in a module-level `_chain` singleton so
+production code only builds it once. In tests that means the chain built by
+an earlier test would leak into later tests unless we reset it first.
 """
+import pytest
 from unittest.mock import patch, MagicMock
+
+import backend.agents.cv_rag_agent as cv_rag_agent
+
+
+@pytest.fixture(autouse=True)
+def _reset_chain_cache():
+    cv_rag_agent._chain = None
+    yield
+    cv_rag_agent._chain = None
 
 
 def test_get_cv_rag_chain_returns_retrieval_qa():

@@ -16,16 +16,16 @@ class AgentRoute(str, Enum):
 
 
 _SKILLS_RE = re.compile(
-    r"\b(skill|tech|stack|language|framework|tool|python|java|react|ml|ai|deep.?learn|"
-    r"machine.?learn|nlp|llm|pytorch|tensorflow|compétence|technologie|maîtrise)\b",
+    r"\b(skill\w*|tech\w*|stack\w*|language\w*|framework\w*|tool\w*|python\w*|java\w*|react\w*|ml|ai|deep.?learn\w*|"
+    r"machine.?learn\w*|nlp|llm\w*|pytorch|tensorflow|compétence\w*|technologie\w*|maîtrise\w*)\b",
     re.IGNORECASE,
 )
 _PROJECTS_RE = re.compile(
-    r"\b(project|projet|réalisation|built|created|developed|github|portfolio|work.?on|travail)\b",
+    r"\b(project\w*|projet\w*|réalisation\w*|built|creat\w*|develop\w*|github|portfolio\w*|work.?on\w*|travail\w*)\b",
     re.IGNORECASE,
 )
 _CONTACT_RE = re.compile(
-    r"\b(contact|email|linkedin|phone|available|availability|hire|recrut|reach|joindre|disponib)\b",
+    r"\b(contact\w*|email\w*|linkedin\w*|phone\w*|availab\w*|hire\w*|recrut\w*|reach\w*|joindre\w*|disponib\w*)\b",
     re.IGNORECASE,
 )
 
